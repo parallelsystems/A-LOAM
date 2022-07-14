@@ -29,7 +29,7 @@ roscore &
 ROSCORE_PID=$!
 sleep 1
 
-rviz -d ../rviz_cfg/aloam_velodyne.rviz &
+nohup rviz -d ../rviz_cfg/aloam_velodyne.rviz &
 RVIZ_PID=$!
 
 A_LOAM_DIR=$(abspath "..")
@@ -48,7 +48,8 @@ if [ "$1" -eq 16 ]; then
             -DCMAKE_BUILD_TYPE=Release; \
         catkin build; \
         source devel/setup.bash; \
-        roslaunch aloam_velodyne aloam_velodyne_VLP_16.launch rviz:=false"
+        nohup roslaunch aloam_velodyne aloam_velodyne_VLP_16.launch rviz:=false & \
+	rosbag play src/A-LOAM/nsh_indoor_outdoor/nsh_indoor_outdoor.bag"
 elif [ "$1" -eq "32" ]; then
     docker run \
     -it \
