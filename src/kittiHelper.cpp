@@ -44,8 +44,10 @@ int main(int argc, char** argv)
     std::cout << "Reading sequence " << sequence_number << " from " << dataset_folder << '\n';
     bool to_bag;
     n.getParam("to_bag", to_bag);
-    if (to_bag)
+    if (to_bag) {
         n.getParam("output_bag_file", output_bag_file);
+        std::cout << "Creating output bag " << output_bag_file << "\n";
+    }
     int publish_delay;
     n.getParam("publish_delay", publish_delay);
     publish_delay = publish_delay <= 0 ? 1 : publish_delay;
@@ -83,15 +85,22 @@ int main(int argc, char** argv)
     std::size_t line_num = 0;
 
     ros::Rate r(10.0 / publish_delay);
+
     while (std::getline(timestamp_file, line) && ros::ok())
     {
         float timestamp = stof(line);
+        std::cout << "\ttimestamp: " << timestamp << "\n";
         std::stringstream left_image_path, right_image_path;
+
+        std::cout << "\t\tLoading left image...\n";
         left_image_path << dataset_folder << "sequences/" + sequence_number + "/image_0/" << std::setfill('0') << std::setw(6) << line_num << ".png";
         cv::Mat left_image = cv::imread(left_image_path.str(), CV_LOAD_IMAGE_GRAYSCALE);
+        std::cout << "\t\tLoading right image...\n";
         right_image_path << dataset_folder << "sequences/" + sequence_number + "/image_1/" << std::setfill('0') << std::setw(6) << line_num << ".png";
         cv::Mat right_image = cv::imread(left_image_path.str(), CV_LOAD_IMAGE_GRAYSCALE);
+        std::cout << "\t\t\tdone\n";
 
+        std::cout << "\t\tGetting lines from ground truth file...\n";
         std::getline(ground_truth_file, line);
         std::stringstream pose_stream(line);
         std::string s;
@@ -104,7 +113,9 @@ int main(int argc, char** argv)
                 gt_pose(i, j) = stof(s);
             }
         }
+        std::cout << "\t\t\tdone\n";
 
+        std::cout << "\t\tGenerating Quaternions...\n";
         Eigen::Quaterniond q_w_i(gt_pose.topLeftCorner<3, 3>());
         Eigen::Quaterniond q = q_transform * q_w_i;
         q.normalize();
@@ -126,12 +137,16 @@ int main(int argc, char** argv)
         pathGT.header.stamp = odomGT.header.stamp;
         pathGT.poses.push_back(poseGT);
         pubPathGT.publish(pathGT);
+        std::cout << "\t\t\tdone\n";
 
+        std::cout << "\t\tReading lidar point cloud...\n";
         // read lidar point cloud
         std::stringstream lidar_data_path;
         lidar_data_path << dataset_folder << "velodyne/sequences/" + sequence_number + "/velodyne/" 
-                        << std::setfill('0') << std::setw(6) << line_num << ".bin";
+                        << std::setfill('0') << std::setw(10) << line_num << ".bin";
+        std::cout << "\t\t\tAttempting to read " << lidar_data_path.str() << "\n";
         std::vector<float> lidar_data = read_lidar_data(lidar_data_path.str());
+        std::cout << "\t\t\tdone\n";
         std::cout << "totally " << lidar_data.size() / 4.0 << " points in this lidar frame \n";
 
         std::vector<Eigen::Vector3d> lidar_points;

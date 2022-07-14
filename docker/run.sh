@@ -34,7 +34,15 @@ RVIZ_PID=$!
 
 A_LOAM_DIR=$(abspath "..")
 
-if [ "$1" -eq 16 ]; then
+if [ "$1" -eq "0" ]; then
+    docker run \
+    -it \
+    --rm \
+    --net=host \
+    -v ${A_LOAM_DIR}:/root/catkin_ws/src/A-LOAM/ \
+    ros:aloam \
+    /bin/bash
+elif [ "$1" -eq 16 ]; then
     docker run \
     -it \
     --rm \
