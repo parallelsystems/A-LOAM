@@ -4,3 +4,4 @@
 kitti/
 *.bag
 nohup.out
+luminar/*
