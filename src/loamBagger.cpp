@@ -39,7 +39,6 @@ std::mutex mBuf;
 rosbag::Bag bag_out;
 
 void laserOdomHandler(const nav_msgs::Odometry::ConstPtr &msg) {
-    std::cout << "\n\n\nodom message received in loamBagger\n";
     mBuf.lock();
     odometryBuf.push(msg);
     mBuf.unlock();
@@ -50,17 +49,17 @@ void process() {
     while (true) {
         while (!odometryBuf.empty()) {
             // store odometry information
+            mBuf.lock();
             bag_out.write(
                 "/laser_odom_to_init",
                 odometryBuf.front()->header.stamp,
-                // ros::Time::now(),
                 odometryBuf.front()
             );
             odometryBuf.pop();
-
-            std::chrono::milliseconds duration(2);
-            std::this_thread::sleep_for(duration);
+            mBuf.unlock();
         }
+        std::chrono::milliseconds duration(2);
+        std::this_thread::sleep_for(duration);
     }
 }
 
