@@ -34,6 +34,7 @@
 #include "aloam_velodyne/tic_toc.h"
 
 std::queue<nav_msgs::Odometry::ConstPtr> odometryBuf;
+std::queue<sensor_msgs::PointCloud2ConstPtr> registeredCloudBuf;
 std::mutex mBuf;
 
 rosbag::Bag bag_out;
@@ -44,18 +45,34 @@ void laserOdomHandler(const nav_msgs::Odometry::ConstPtr &msg) {
     mBuf.unlock();
 }
 
+void registeredCloudHandler(const sensor_msgs::PointCloud2ConstPtr &msg) {
+    mBuf.lock();
+    registeredCloudBuf.push(msg);
+    mBuf.unlock();
+}
+
 
 void process() {
     while (true) {
-        while (!odometryBuf.empty()) {
-            // store odometry information
+        while (!odometryBuf.empty() && !registeredCloudBuf.empty()) {
             mBuf.lock();
+
+            // Store odometry information
             bag_out.write(
                 "/laser_odom_to_init",
                 odometryBuf.front()->header.stamp,
                 odometryBuf.front()
             );
             odometryBuf.pop();
+
+            // Store registered point clouds
+            bag_out.write(
+                "/velodyne_cloud_registered",
+                registeredCloudBuf.front()->header.stamp,
+                registeredCloudBuf.front()
+            );
+
+
             mBuf.unlock();
         }
         std::chrono::milliseconds duration(2);
@@ -67,9 +84,8 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "loamBagger");
     ros::NodeHandle nh;
 
-    std::cout << "Beginning loamBagger\n";
-
     ros::Subscriber subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("/laser_odom_to_init", 100, laserOdomHandler);
+    ros::Subscriber subRegisteredCloud = nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_cloud_registered", 100, registeredCloudHandler);
 
     bag_out.open("/tmp/LOAM.bag", rosbag::bagmode::Write);
 
