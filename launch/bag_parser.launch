@@ -1,0 +1,4 @@
+<launch>
+    <node name="bagParser" pkg="aloam_velodyne" type="bagParser" output="screen"> 
+    </node>
+</launch>

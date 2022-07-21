@@ -71,6 +71,7 @@ void process() {
                 registeredCloudBuf.front()->header.stamp,
                 registeredCloudBuf.front()
             );
+            registeredCloudBuf.pop();
 
 
             mBuf.unlock();
@@ -81,11 +82,11 @@ void process() {
 }
 
 int main(int argc, char** argv) {
-    ros::init(argc, argv, "loamBagger");
+    ros::init(argc, argv, "loam_bagger");
     ros::NodeHandle nh;
 
     ros::Subscriber subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("/laser_odom_to_init", 100, laserOdomHandler);
-    ros::Subscriber subRegisteredCloud = nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_cloud_registered", 100, registeredCloudHandler);
+    ros::Subscriber subRegisteredCloud = nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 100, registeredCloudHandler);
 
     bag_out.open("/tmp/LOAM.bag", rosbag::bagmode::Write);
 

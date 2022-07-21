@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
             point.x = points[i][1];
             point.y = points[i][2];
             point.z = points[i][3];
-            point.intensity = 1.;
+            point.intensity = points[i][0];
             laser_cloud.push_back(point);
         }
 

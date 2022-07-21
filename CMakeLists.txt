@@ -54,3 +54,6 @@ target_link_libraries(kittiHelper ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_
 
 add_executable(luminarHelper src/luminarHelper.cpp)
 target_link_libraries(luminarHelper ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(bagParser src/bagParser.cpp)
+target_link_libraries(bagParser ${catkin_LIBRARIES} ${PCL_LIBRARIES})
