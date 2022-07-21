@@ -18,7 +18,7 @@ void registeredCloudHandler(const sensor_msgs::PointCloud2ConstPtr &msg) {
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::fromROSMsg(*msg, *cloud);
     for (auto point : *cloud) {
-        txyz << point.x << "," << point.y << "," << point.z << "\n";
+        txyz << msg->header.stamp << "," << point.x << "," << point.y << "," << point.z << "\n";
     }
 }
 
