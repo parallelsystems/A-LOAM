@@ -22,12 +22,12 @@ def idxs_valid(idxs: list):
     meta_subset = [meta[i] for i in idxs]
     for i in range(len(meta_subset)-1):
         # assert ordering
-        if meta_subset[i+1][0] <= meta_subset[i][0]:
+        if meta_subset[i+1]["timestamp"] <= meta_subset[i]["timestamp"]:
             return False
         # assert these files are sufficiently close together
         # this is simple check that all files in `idxs` were
         # collected as part of the same run
-        elif meta_subset[i+1][0] - meta_subset[i][0] > MAX_TIME_S:
+        elif meta_subset[i+1]["timestamp"] - meta_subset[i]["timestamp"] > MAX_TIME_S * 1e9:
             return False
     return True
     
@@ -35,7 +35,7 @@ def make_metafiles(idxs: list, scene_name):
     """Generates `files.txt`, `times.txt` for `idxs`
     """
     meta_subset = [meta[i] for i in idxs]
-    times, names = [m[0] for m in meta_subset], [m[1] for m in meta_subset]
+    times, names = [m["timestamp"]*1e-9 for m in meta_subset], [m["file_name"] for m in meta_subset]
 
     dest_dir = os.path.join(DATA_DIR, scene_name)
     if not os.path.isdir(dest_dir):
@@ -64,7 +64,7 @@ def pull_txyzs(idxs: list, scene_name: str):
     print("Copying...")
     for i in tqdm(idxs):
         shutil.copy(
-            os.path.join(LIDAR_DIR, "xyz/", meta[i][1]),
+            os.path.join(LIDAR_DIR, "xyz/", meta[i]["file_name"]),
             dest_dir
         )
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     import random
     random.seed(42)
     N_SCENES = 5
-    SCENE_LENGTH = 500
+    SCENE_LENGTH = 100
 
     selected = []
     valid_scenes = range(len(meta) // SCENE_LENGTH)
@@ -125,8 +125,7 @@ if __name__ == "__main__":
         scene_name = str(len(os.listdir(DATA_DIR)))
         try:
             pull_txyzs(scene_idxs, scene_name)
+            selected.append(scene_start)
         except Exception as e:
             print(f"Encountered {e} at scene with start index {scene_start}")
-            import code
-            code.interact(local=locals())
 
