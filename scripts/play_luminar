@@ -1,0 +1,3 @@
+#/bin/sh
+
+nohup rosbag play luminar/3/luminar.bag &

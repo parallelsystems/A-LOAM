@@ -28,7 +28,6 @@ void registeredCloudHandler(const sensor_msgs::PointCloud2ConstPtr &msg) {
 // saves pose, orientation
 // Doesn't appear that LOAM populates the velocity info but these messages would contain that
 void odometryHandler(const nav_msgs::Odometry::ConstPtr &msg) {
-    ros::Time time = msg->header.stamp;
     odom << msg->header.stamp << "," 
          << msg->pose.pose.position.x << ","
          << msg->pose.pose.position.y << ","
@@ -51,7 +50,7 @@ int main(int argc, char** argv) {
 
     uint c = 0;
     // This is not reliable, I just previously hardcoded scenes to be 500 .xyz files long
-    size_t bag_size = 1000;
+    size_t bag_size = 500;
     std::cout << "Parsing bagfile...\n";
     for (rosbag::MessageInstance const m: rosbag::View(bag)) {
         std::string topic = m.getTopic();

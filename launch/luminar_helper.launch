@@ -1,8 +1,11 @@
 <launch>
     <node name="luminarHelper" pkg="aloam_velodyne" type="luminarHelper" output="screen"> 
+        <!--
         <param name="dataset_folder" type="string" value="/root/catkin_ws/src/A-LOAM/luminar/4/" />
-        <param name="to_bag" type="bool" value="true" />
+        -->
+        <!--
         <param name="output_bag_file" type="string" value="/root/catkin_ws/src/A-LOAM/luminar/4/luminar.bag" />
+        -->
         <param name="publish_delay" type="int" value="1" />
     </node>
 </launch>

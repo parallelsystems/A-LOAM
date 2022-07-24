@@ -1,0 +1,3 @@
+#/bin/sh
+
+roslaunch aloam_velodyne luminar_helper.launch

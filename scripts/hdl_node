@@ -1,0 +1,3 @@
+#/bin/sh
+
+nohup roslaunch aloam_velodyne aloam_velodyne_HDL_64.launch &

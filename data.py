@@ -112,7 +112,7 @@ if __name__ == "__main__":
     """
     import random
     random.seed(42)
-    N_SCENES = 5
+    N_SCENES = 100
     SCENE_LENGTH = 100
 
     selected = []
