@@ -19,8 +19,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <sensor_msgs/PointCloud2.h>
 
-std::vector<std::vector<float>> read_lidar_data(const std::string lidar_data_path) {
-    std::vector<std::vector<float>> points;
+std::vector<std::vector<std::string>> read_lidar_data(const std::string lidar_data_path) {
+    std::vector<std::vector<std::string>> points;
 
     std::ifstream lidar_data_file(lidar_data_path, std::ifstream::in);
     std::string line;
@@ -29,11 +29,11 @@ std::vector<std::vector<float>> read_lidar_data(const std::string lidar_data_pat
     while (std::getline(lidar_data_file, line)) {
         std::istringstream sstream(line);
         std::string elem;
-        std::vector<float> point;
+        std::vector<std::string> point;
 
         // iterate over entries in (t, x, y, z) tuple
         while (std::getline(sstream, elem, ',')) {
-            point.push_back(stof(elem));
+            point.push_back(elem);
         }
 
         points.push_back(point);
@@ -68,43 +68,56 @@ int main(int argc, char** argv) {
         bag_out.open(output_bag_file, rosbag::bagmode::Write);
 
         // index for file load order
-        std::ifstream time_file(dataset_folder + "times.txt", std::ifstream::in);
+        // std::ifstream time_file(dataset_folder + "times.txt", std::ifstream::in);
         std::ifstream map_file(dataset_folder + "files.txt", std::ifstream::in);
 
-        std::size_t line_num = 0;
         ros::Rate r(10.0 / publish_delay);
 
-        std::string time, fname, lidar_data_path;
+        std::string fname, lidar_data_path;
 
-        while (std::getline(time_file, time) && std::getline(map_file, fname) && ros::ok()) {
+        while (std::getline(map_file, fname) && ros::ok()) {
 
             std::cout << "\tReading lidar point cloud...\n";
-            std::cout << "\t\tTime: " << time << "\n";
             std::cout << "\t\tFilename: " << fname << "\n";
 
             lidar_data_path = dataset_folder + fname;
-            std::vector<std::vector<float>> points = read_lidar_data(lidar_data_path);
+            std::vector<std::vector<std::string>> points = read_lidar_data(lidar_data_path);
             std::cout << "\t\tPoints in file: " << points.size() << "\n";
 
-            pcl::PointCloud<pcl::PointXYZI> laser_cloud;
-
-            for (std::size_t i=0; i < points.size(); i++) {
-                pcl::PointXYZI point;
-                point.x = points[i][1];
-                point.y = points[i][2];
-                point.z = points[i][3];
-                point.intensity = points[i][0];
-                laser_cloud.push_back(point);
+            if (points.size() == 0) {
+                continue;
             }
 
-            sensor_msgs::PointCloud2 laser_cloud_msg;
-            pcl::toROSMsg(laser_cloud, laser_cloud_msg);
-            laser_cloud_msg.header.stamp = ros::Time().fromSec(stod(time));
-            laser_cloud_msg.header.frame_id = "camera_init";
-            pub_laser_cloud.publish(laser_cloud_msg);
+            std::cout << "\t\tTime: " <<  points[0][0] << "\n";
 
-            bag_out.write("/velodyne_points", ros::Time::now(), laser_cloud_msg);
-            line_num++;
+            pcl::PointCloud<pcl::PointXYZI> laser_cloud;
+            std::string time = points[0][0];
+            uint n_clouds = 0;
+            for (uint i=0; i<points.size(); i++) {
+                if (points[i][0] != time) {
+                    // broadcast existing point cloud and reset
+                    n_clouds++;
+                    std::cout << "\t\t" << n_clouds << "\r";
+
+                    sensor_msgs::PointCloud2 laser_cloud_msg;
+                    pcl::toROSMsg(laser_cloud, laser_cloud_msg);
+                    laser_cloud_msg.header.stamp = ros::Time().fromSec(stod(time));
+                    laser_cloud_msg.header.frame_id = "camera_init";
+                    pub_laser_cloud.publish(laser_cloud_msg);
+
+                    bag_out.write("/velodyne_points", ros::Time::now(), laser_cloud_msg);
+                    laser_cloud.clear();
+
+                    time = points[i][0];
+                }
+                pcl::PointXYZI point;
+                point.x = stod(points[i][1]);
+                point.y = stod(points[i][2]);
+                point.z = stod(points[i][3]);
+                point.intensity = 1;
+                laser_cloud.push_back(point);
+            }
+            std::cout << "\t\tNum clouds " << n_clouds << "\n";
         }
 
         bag_out.close();
