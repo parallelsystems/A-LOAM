@@ -1,5 +1,7 @@
 /*
- * Utility for saving relevant ROS topics to a bagfile
+ * ROS node for saving important LOAM-related topics to an output bagfile
+ * Needed instead of rosbag record because we want to preserve timestamps
+ * as they are sent, not at capture time
  *
  */
 

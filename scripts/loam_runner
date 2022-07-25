@@ -1,0 +1,12 @@
+#/bin/sh
+
+BASEDIR="/root/catkin_ws/src/A-LOAM/"
+for scene in {0..99}; do
+    echo "Scene $i"
+    # start LOAM nodes
+    $BASEDIR/scripts/hdl_node
+    # play bagfile
+    rosbag play $BASEDIR/luminar/$scene/luminar.bag
+    # when bagfile is done playing, move it back over and start again
+    mv /tmp/LOAM.bag $BASEDIR/luminar/$scene/
+done
