@@ -11,7 +11,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <mutex>
 
-
+rosbag::Bag bag;
 std::ofstream txyz;
 std::ofstream odom;
 
@@ -42,36 +42,42 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "bag_parser");
     ros::NodeHandle nh;
 
-    rosbag::Bag bag;
-    bag.open("/tmp/LOAM.bag");
+    std::string all_scenes_folder = "/root/catkin_ws/src/A-LOAM/luminar/";
+    std::size_t num_scenes = 100;
+    for (uint scene=0; scene<num_scenes; scene++) {
+        std::string scene_folder = all_scenes_folder + std::to_string(scene) + "/";
 
-    txyz.open("/tmp/scene.xyz");
-    odom.open("/tmp/odom.csv");
+        std::cout << "\tParsing bagfile in" << scene_folder << "...\n";
 
-    uint c = 0;
-    // This is not reliable, I just previously hardcoded scenes to be 500 .xyz files long
-    size_t bag_size = 500;
-    std::cout << "Parsing bagfile...\n";
-    for (rosbag::MessageInstance const m: rosbag::View(bag)) {
-        std::string topic = m.getTopic();
+        bag.open(scene_folder + "LOAM.bag");
 
-        if (topic == "/velodyne_cloud_registered") {
-            sensor_msgs::PointCloud2ConstPtr msg = m.instantiate<sensor_msgs::PointCloud2>();
-            registeredCloudHandler(msg);
-        } else if (topic == "/laser_odom_to_init") {
-            nav_msgs::Odometry::ConstPtr msg = m.instantiate<nav_msgs::Odometry>();
-            odometryHandler(msg);
+        txyz.open(scene_folder + "scene.xyz");
+        odom.open(scene_folder + "odom.csv");
+
+        uint c = 0;
+        size_t bag_size = 100;
+        for (rosbag::MessageInstance const m: rosbag::View(bag)) {
+            std::string topic = m.getTopic();
+
+            if (topic == "/velodyne_cloud_registered") {
+                sensor_msgs::PointCloud2ConstPtr msg = m.instantiate<sensor_msgs::PointCloud2>();
+                registeredCloudHandler(msg);
+            } else if (topic == "/laser_odom_to_init") {
+                nav_msgs::Odometry::ConstPtr msg = m.instantiate<nav_msgs::Odometry>();
+                odometryHandler(msg);
+            }
+            else {
+                continue;
+            }
+
+            std::cout << "\t\t" <<  (100. * c) / bag_size << " %\r";
+            c++;
         }
-         else {
-            std::cout << "Unrecognized topic " << topic << "\n";
-        }
+        std::cout << std::endl;
 
-        std::cout << "\t" <<  (100. * c) / bag_size << " %\r";
-        c++;
+        txyz.close();
+        odom.close();
+        bag.close();
+
     }
-    std::cout << std::endl;
-
-    txyz.close();
-    odom.close();
-    bag.close();
 }
