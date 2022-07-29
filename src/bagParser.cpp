@@ -59,10 +59,10 @@ int main(int argc, char** argv) {
         for (rosbag::MessageInstance const m: rosbag::View(bag)) {
             std::string topic = m.getTopic();
 
-            if (topic == "/velodyne_cloud_registered") {
+            if (topic == "/laser_cloud_map") {
                 sensor_msgs::PointCloud2ConstPtr msg = m.instantiate<sensor_msgs::PointCloud2>();
                 registeredCloudHandler(msg);
-            } else if (topic == "/laser_odom_to_init") {
+            } else if (topic == "/aft_mapped_to_init") {
                 nav_msgs::Odometry::ConstPtr msg = m.instantiate<nav_msgs::Odometry>();
                 odometryHandler(msg);
             }

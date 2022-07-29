@@ -56,25 +56,30 @@ void registeredCloudHandler(const sensor_msgs::PointCloud2ConstPtr &msg) {
 
 void process() {
     while (true) {
-        while (!odometryBuf.empty() && !registeredCloudBuf.empty()) {
+        while (!odometryBuf.empty()) {
             mBuf.lock();
 
             // Store odometry information
             bag_out.write(
-                "/laser_odom_to_init",
+                "/aft_mapped_to_init",
                 odometryBuf.front()->header.stamp,
                 odometryBuf.front()
             );
             odometryBuf.pop();
 
+            mBuf.unlock();
+        }
+
+        while (!registeredCloudBuf.empty()) {
+            mBuf.lock();
+
             // Store registered point clouds
             bag_out.write(
-                "/velodyne_cloud_registered",
+                "/laser_cloud_map",
                 registeredCloudBuf.front()->header.stamp,
                 registeredCloudBuf.front()
             );
             registeredCloudBuf.pop();
-
 
             mBuf.unlock();
         }
@@ -87,8 +92,8 @@ int main(int argc, char** argv) {
     ros::init(argc, argv, "loam_bagger");
     ros::NodeHandle nh;
 
-    ros::Subscriber subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("/laser_odom_to_init", 100, laserOdomHandler);
-    ros::Subscriber subRegisteredCloud = nh.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 100, registeredCloudHandler);
+    ros::Subscriber subLaserOdometry = nh.subscribe<nav_msgs::Odometry>("/aft_mapped_to_init", 100, laserOdomHandler);
+    ros::Subscriber subRegisteredCloud = nh.subscribe<sensor_msgs::PointCloud2>("/laser_cloud_map", 100, registeredCloudHandler);
 
     bag_out.open("/tmp/LOAM.bag", rosbag::bagmode::Write);
 
